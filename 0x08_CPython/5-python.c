@@ -1,109 +1,69 @@
 #include <Python.h>
+#include <limits.h>
+#include <stdint.h>
 
-
-/* Pre 3.12 version */
 /**
- * print_python_int - func
- * @p: PyObject
+ * print_python_int - prints info about a Python int object
+ * @p: PyObject pointer
  */
 void print_python_int(PyObject *p)
 {
-	char sign = 0;
-	Py_ssize_t i = 0, len = 0;
-	unsigned long int n = 0, pow = 0, prod = 0;
-	PyLongObject *lob = NULL;
-	digit *dig;
+        char sign = 0;
+        unsigned long int n = 0, pw = 0, prod = 0;
+        PyLongObject *lob = NULL;
+        digit *dig = NULL;
 
-	/* printf("[*] Python integer info\n"); */
-	if (!PyLong_Check(p))
-	{
-		/* printf("  [ERROR] Invalid List Object\n"); */
-		printf("Invalid Int Object\n");
-		return;
-	}
-	lob = (PyLongObject *)p;
-	len = *(Py_ssize_t *)((char *)lob + sizeof(PyObject));
-	if (len < 0)
-	{
-		len *= -1;
-		sign = '-';
-	}
-	dig = (digit *)((char *)lob + sizeof(PyObject) + sizeof(Py_ssize_t));;
-	if (!len)
-		n = 0;
-	else
-	{
-		for (; i < len; i++)
-		{
-			pow = (1UL << (PyLong_SHIFT * i));
-			prod = (unsigned long)dig[i] * pow;
-			if ((dig[i] && (pow > ULLONG_MAX / dig[i])) ||
-				(prod > (ULONG_MAX - n)))
-			{
-				printf("C unsigned long int overflow\n");
-				return;
-			}
-			n += prod;
-		}
-	}
-	if (sign)
-	{
-		printf("%c", sign);
-		fflush(NULL);
-	}
-	printf("%lu\n", n);
+#if PY_VERSION_HEX >= 0x030C0000
+        uintptr_t *tag_ptr = NULL;
+        uintptr_t tag = 0;
+        int len = 0, i = 0;
+#else
+        Py_ssize_t len = 0, i = 0;
+#endif
+
+        if (!PyLong_Check(p))
+        {
+                printf("Invalid Int Object\n");
+                return;
+        }
+        lob = (PyLongObject *)p;
+
+#if PY_VERSION_HEX >= 0x030C0000
+        tag_ptr = (uintptr_t *)((char *)lob + sizeof(PyObject));
+        tag = *tag_ptr;
+        len = (int)(tag >> 3);
+        dig = (digit *)((char *)tag_ptr + sizeof(uintptr_t));
+        if ((tag & 3) == 2)
+                sign = '-';
+        if ((tag & 3) == 1)
+                len = 0;
+#else
+        len = *(Py_ssize_t *)((char *)lob + sizeof(PyObject));
+        if (len < 0)
+        {
+                len *= -1;
+                sign = '-';
+        }
+        dig = (digit *)((char *)lob + sizeof(PyObject) + sizeof(Py_ssize_t));
+#endif
+        if (!len)
+                n = 0;
+        else
+        {
+                for (i = 0; i < len; i++)
+                {
+                        pw = (1UL << (PyLong_SHIFT * i));
+                        prod = (unsigned long)dig[i] * pw;
+                        if ((dig[i] && (pw > ULONG_MAX / dig[i])) ||
+                                (prod > (ULONG_MAX - n)))
+                        {
+                                printf("C unsigned long int overflow\n");
+                                return;
+                        }
+                        n += prod;
+                }
+        }
+        if (sign)
+                printf("%c", sign);
+        printf("%lu\n", n);
 }
-
-
-
-/* 3.12-Later version */
-
-/**
- * print_python_int - func
- * @p: PyObject
- */
-/*
-void print_python_int(PyObject *p)
-{
-	char sign = 0;
-	int i = 0, len = 0;
-	unsigned long int n = 0, pow = 0, prod = 0;
-	PyLongObject *lob = NULL;
-	struct _PyLongValue *lv = NULL;
-	uintptr_t lv_tag = 0;
-	digit *dig;
-
-	printf("[*] Python integer info\n");
-	if (!PyLong_Check(p))
-	{
-		printf("  [ERROR] Invalid List Object\n");
-		printf("Invalid Int Object\n");
-		return;
-	}
-	lob = (PyLongObject *)p;
-	lv = (struct _PyLongValue *)((char *)lob + sizeof(PyObject));
-	lv_tag = *((uintptr_t *)lv);
-	len = (int)(lv_tag >> 3);
-	dig = (digit *)((char *)lv + sizeof(uintptr_t));
-	if ((lv_tag & 3) == 1)
-		n = 0;
-	else
-	{
-		if ((lv_tag & 3) == 2)
-			sign = '-';
-		for (; i < len; i++)
-		{
-			pow = (1UL << (PyLong_SHIFT * i));
-			prod = (unsigned long)dig[i] * pow;
-			if ((dig[i] && (pow > ULLONG_MAX / dig[i])) ||
-				(prod > (ULONG_MAX - n)))
-			{
-				printf("C unsigned long int overflow\n");
-				return;
-			}
-			n += prod;
-		}
-	}
-	printf("%c%lu\n", sign, n);
-}
-*/
