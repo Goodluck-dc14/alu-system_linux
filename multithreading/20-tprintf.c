@@ -1,7 +1,5 @@
 #include "multithreading.h"
 
-
-
 static pthread_mutex_t mutex;
 
 /*
@@ -9,25 +7,22 @@ static pthread_mutex_t mutex;
 * pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 */
 
-
 /**
 * mutex_create - func
 */
 void mutex_create(void)
 {
-	pthread_mutex_init(&mutex, NULL);
+        setbuf(stdout, NULL);
+        pthread_mutex_init(&mutex, NULL);
 }
-
 
 /**
 * mutex_destroy - func
 */
 void mutex_destroy(void)
 {
-	pthread_mutex_destroy(&mutex);
+        pthread_mutex_destroy(&mutex);
 }
-
-
 
 /**
 * tprintf - func
@@ -36,15 +31,15 @@ void mutex_destroy(void)
 */
 int tprintf(char const *format, ...)
 {
-	pthread_t tid;
-	va_list args;
+        pthread_t tid;
+        va_list args;
 
-	pthread_mutex_lock(&mutex);
-	tid = pthread_self();
-	printf("[%ld] ", tid);
-	va_start(args, format);
-	vprintf(format, args);
-	va_end(args);
-	pthread_mutex_unlock(&mutex);
-	return (0);
+        pthread_mutex_lock(&mutex);
+        tid = pthread_self();
+        printf("[%ld] ", tid);
+        va_start(args, format);
+        vprintf(format, args);
+        va_end(args);
+        pthread_mutex_unlock(&mutex);
+        return (0);
 }
