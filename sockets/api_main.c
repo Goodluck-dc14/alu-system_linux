@@ -80,6 +80,7 @@ int main(void)
 	int client_fd;
 	struct sockaddr_in client_addr;
 	char client_ip[INET_ADDRSTRLEN];
+        setbuf(stdout, NULL);
 
 #if API_LEVEL >= 4
 	todos_init();

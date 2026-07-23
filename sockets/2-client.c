@@ -44,7 +44,8 @@ int main(int argc, char *argv[])
 	server_addr.sin_port = htons((unsigned short)atoi(argv[2]));
 	server_addr.sin_addr = *((struct in_addr *)host->h_addr);
 
-	if (connect(client_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+        if (connect(client_fd, (struct sockaddr *)&server_addr,
+                        sizeof(server_addr)) < 0)
 	{
 		perror("connect");
 		close(client_fd);
